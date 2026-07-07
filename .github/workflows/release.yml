@@ -7,4 +7,4 @@ on:
 
 jobs:
   release:
-    uses: Aegolius-Labs/.github/.github/workflows/conventional-release.yml@main
+    uses: ./.github/workflows/conventional-release.yml
