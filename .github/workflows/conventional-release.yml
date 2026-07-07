@@ -80,6 +80,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Bootstrap initial tag if missing
+        run: |
+          if ! git ls-remote --tags origin | grep -q 'refs/tags/'; then
+            echo "No tags found in repository. Bootstrapping v0.0.0..."
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag v0.0.0
+            git push origin v0.0.0
+          fi
+
       - name: Compute next version from Conventional Commits
         id: tag
         uses: mathieudutour/github-tag-action@v6.2
