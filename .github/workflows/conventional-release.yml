@@ -1,0 +1,127 @@
+name: Conventional Release
+
+on:
+  workflow_call:
+    inputs:
+      tag-prefix:
+        description: "Prefix applied to version tags (e.g. 'v' -> v1.2.3)."
+        required: false
+        type: string
+        default: 'v'
+      release-branches:
+        description: >
+          Regex/CSV of branches allowed to cut a real release (passed to the tag
+          action's release_branches). On non-matching branches the action only
+          performs a dry run.
+        required: false
+        type: string
+        default: 'main'
+      default-bump:
+        description: >
+          Bump applied when no Conventional Commit dictates one
+          ('patch' | 'minor' | 'major' | 'false'). 'false' means no release is
+          cut unless a feat/fix/BREAKING commit is present.
+        required: false
+        type: string
+        default: 'false'
+      update-major-tag:
+        description: >
+          Also move a floating major tag (e.g. 'v1') to the new release.
+        required: false
+        type: boolean
+        default: false
+      dry-run:
+        description: >
+          Compute the next version without creating a tag or release.
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      new-tag:
+        description: >
+          Computed next tag (e.g. 'v1.2.0'). Populated whenever the commits
+          warrant a bump, INCLUDING dry-run and non-release runs; it does not
+          by itself mean a tag was created. Check 'released' for that. Empty
+          only when no bump is warranted.
+        value: ${{ jobs.release.outputs.new-tag }}
+      new-version:
+        description: >
+          Computed next version without the tag prefix (e.g. '1.2.0').
+          Populated whenever a bump is warranted, INCLUDING dry-run and
+          non-release runs; it does not by itself mean a release was created.
+          Check 'released' for that.
+        value: ${{ jobs.release.outputs.new-version }}
+      previous-tag:
+        description: "Previous tag the bump was computed from."
+        value: ${{ jobs.release.outputs.previous-tag }}
+      released:
+        description: >
+          Authoritative created-or-not signal: 'true' only when a tag and
+          GitHub Release were actually created (a bump occurred and this was
+          not a dry run); 'false' otherwise.
+        value: ${{ jobs.release.outputs.released }}
+
+jobs:
+  release:
+    name: Tag and release
+    # Only contents:write is needed - NO pull-requests scope, so this is immune
+    # to the disabled "Actions may create and approve PRs" org setting.
+    permissions:
+      contents: write
+    outputs:
+      new-tag: ${{ steps.tag.outputs.new_tag }}
+      new-version: ${{ steps.tag.outputs.new_version }}
+      previous-tag: ${{ steps.tag.outputs.previous_tag }}
+      released: ${{ steps.released.outputs.released }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version from Conventional Commits
+        id: tag
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ github.token }}
+          tag_prefix: ${{ inputs.tag-prefix }}
+          release_branches: ${{ inputs.release-branches }}
+          default_bump: ${{ inputs.default-bump }}
+          dry_run: ${{ inputs.dry-run }}
+
+      - name: Determine whether a release was created
+        id: released
+        env:
+          NEW_TAG: ${{ steps.tag.outputs.new_tag }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          if [ -n "$NEW_TAG" ] && [ "$DRY_RUN" != "true" ]; then
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        if: ${{ steps.released.outputs.released == 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.new_tag }}
+          name: ${{ steps.tag.outputs.new_tag }}
+          body: ${{ steps.tag.outputs.changelog }}
+          make_latest: 'true'
+
+      - name: Move floating major tag
+        if: >-
+          ${{ steps.released.outputs.released == 'true' &&
+          inputs.update-major-tag }}
+        env:
+          NEW_TAG: ${{ steps.tag.outputs.new_tag }}
+        run: |
+          set -euo pipefail
+          MAJOR="${NEW_TAG%%.*}"
+          # e.g. v1.2.0 -> v1
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -fa "$MAJOR" -m "Update $MAJOR to $NEW_TAG"
+          git push origin "$MAJOR" --force

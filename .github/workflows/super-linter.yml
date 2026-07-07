@@ -1,0 +1,48 @@
+name: Shared Linting
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: '20'
+      python-version:
+        required: false
+        type: string
+        default: '3.12'
+
+jobs:
+  lint:
+    name: Super-Linter
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout Central Configs
+        uses: actions/checkout@v4
+        with:
+          repository: Aegolius-Labs/.github
+          path: .github-central
+
+      - name: Super-Linter
+        uses: github/super-linter@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LINTER_RULES_PATH: .github-central/linters
+          # Enable desired linters. You can customize this list based on your org's stack.
+          VALIDATE_PYTHON_RUFF: true
+          VALIDATE_PYTHON_BLACK: true
+          VALIDATE_PYTHON_ISORT: true
+          VALIDATE_PYTHON_MYPY: true
+          VALIDATE_JAVASCRIPT_ES: true
+          VALIDATE_TYPESCRIPT_ES: true
+          VALIDATE_JSON: true
+          VALIDATE_YAML: true
+          VALIDATE_MARKDOWN: true
