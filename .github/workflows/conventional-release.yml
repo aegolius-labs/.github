@@ -112,9 +112,7 @@ jobs:
           make_latest: 'true'
 
       - name: Move floating major tag
-        if: >-
-          ${{ steps.released.outputs.released == 'true' &&
-          inputs.update-major-tag }}
+        if: steps.released.outputs.released == 'true' && inputs.update-major-tag
         env:
           NEW_TAG: ${{ steps.tag.outputs.new_tag }}
         run: |
