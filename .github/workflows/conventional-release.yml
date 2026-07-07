@@ -83,10 +83,11 @@ jobs:
       - name: Bootstrap initial tag if missing
         run: |
           if ! git ls-remote --tags origin | grep -q 'refs/tags/'; then
-            echo "No tags found in repository. Bootstrapping v0.0.0..."
+            echo "No tags found in repository. Bootstrapping v0.0.0 on the first commit..."
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag v0.0.0
+            FIRST_COMMIT=$(git rev-list --max-parents=0 HEAD | tail -1)
+            git tag v0.0.0 $FIRST_COMMIT
             git push origin v0.0.0
           fi
 
