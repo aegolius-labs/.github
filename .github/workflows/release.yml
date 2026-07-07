@@ -1,0 +1,10 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    uses: Aegolius-Labs/.github/.github/workflows/conventional-release.yml@main
