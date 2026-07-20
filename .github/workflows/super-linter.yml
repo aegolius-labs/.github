@@ -13,8 +13,30 @@ on:
         default: '3.12'
 
 jobs:
+  detect-targets:
+    name: Detect quality targets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      has-rust: ${{ steps.detect.outputs.has-rust }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Detect Rust workspace
+        id: detect
+        shell: bash
+        run: |
+          if [[ -f Cargo.toml ]]; then
+            echo "has-rust=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-rust=false" >> "$GITHUB_OUTPUT"
+          fi
+
   lint:
     name: Super-Linter
+    needs: detect-targets
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,13 +57,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LINTER_RULES_PATH: .github-central/linters
-          # Enable desired linters. You can customize this list based on your org's stack.
-          VALIDATE_PYTHON_RUFF: true
-          VALIDATE_PYTHON_BLACK: true
-          VALIDATE_PYTHON_ISORT: true
-          VALIDATE_PYTHON_MYPY: true
-          VALIDATE_JAVASCRIPT_ES: true
-          VALIDATE_TYPESCRIPT_ES: true
-          VALIDATE_JSON: true
-          VALIDATE_YAML: true
-          VALIDATE_MARKDOWN: true
+          # No VALIDATE_* flags: Super-Linter selects its supported linters
+          # from the files in each caller repository.
+
+  rust-quality:
+    name: Rust quality
+    needs: detect-targets
+    if: needs.detect-targets.outputs.has-rust == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Lint
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace --all-targets
