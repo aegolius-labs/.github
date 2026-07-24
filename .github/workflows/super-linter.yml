@@ -57,8 +57,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LINTER_RULES_PATH: .github-central/linters
-          # No VALIDATE_* flags: Super-Linter selects its supported linters
-          # from the files in each caller repository.
+          # Super-Linter selects its supported linters from the files in each
+          # caller repository, except Rust (handled by rust-quality below).
+          # Super-Linter's embedded Rust toolchain cannot parse edition 2024.
+          # The rust-quality job below runs rustfmt, Clippy, and tests with
+          # the current stable toolchain whenever a Cargo workspace is found.
+          VALIDATE_RUST_2015: false
+          VALIDATE_RUST_2018: false
+          VALIDATE_RUST_2021: false
+          VALIDATE_RUST_CLIPPY: false
 
   rust-quality:
     name: Rust quality
@@ -74,15 +81,16 @@ jobs:
           fetch-depth: 0
 
       - name: Install Rust
+        id: rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
       - name: Check formatting
-        run: cargo fmt --all --check
+        run: cargo +${{ steps.rust.outputs.name }} fmt --all --check
 
       - name: Lint
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo +${{ steps.rust.outputs.name }} clippy --workspace --all-targets -- -D warnings
 
       - name: Test
-        run: cargo test --workspace --all-targets
+        run: cargo +${{ steps.rust.outputs.name }} test --workspace --all-targets
