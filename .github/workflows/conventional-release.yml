@@ -1,5 +1,24 @@
 name: Conventional Release
 
+# This workflow tags and releases whatever commit it runs on; it does not know
+# whether that commit passed CI. Callers must gate it on their CI with `needs`,
+# so a release is never cut for a failing commit:
+#
+#   on:
+#     push:
+#       branches: [main]
+#   jobs:
+#     ci:
+#       uses: ./.github/workflows/ci.yml   # CI also declares `workflow_call:`
+#     release:
+#       needs: ci
+#       permissions:
+#         contents: write
+#       uses: Aegolius-Labs/.github/.github/workflows/conventional-release.yml@main
+#
+# Prefer this to a `workflow_run` trigger: that runs on the latest main rather
+# than the commit CI tested, and this workflow tags `github.sha`.
+
 on:
   workflow_call:
     inputs:
