@@ -5,13 +5,24 @@ This guide applies to every Aegolius Labs repository. A repository's own
 more specific. GitHub shows this file for any repository that has no
 `CONTRIBUTING.md` of its own.
 
+Everything here serves one end goal: `aio-agentic-sdlc`, a framework where a
+person states intent, agents build and update the Intention and Reality DAGs,
+and the scored diff between them is the backlog. Its
+[`doc/VISION.md`](https://github.com/aegolius-labs/aio-agentic-sdlc/blob/main/doc/VISION.md)
+is the vision for the whole organization. The other repositories are its
+layers, and the kits also work on their own.
+
 The products are:
 
 | Repository | What it is |
 | --- | --- |
-| [aio-agentic-sdlc](https://github.com/aegolius-labs/aio-agentic-sdlc) | The framework: Intention and Reality DAGs, the diff as the backlog, approval gates |
-| [agentic-backlog-kit](https://github.com/aegolius-labs/agentic-backlog-kit) | A projection of work onto GitHub Issues and Projects |
-| [agentic-qa-kit](https://github.com/aegolius-labs/agentic-qa-kit) | An evidence ledger and skills for agent-assisted QA |
+| [aio-agentic-sdlc](https://github.com/aegolius-labs/aio-agentic-sdlc) | The framework and end product: Intention and Reality DAGs, the diff as the backlog, approval gates |
+| [agentic-backlog-kit](https://github.com/aegolius-labs/agentic-backlog-kit) | The projection layer: the framework's work shown on GitHub Issues and Projects |
+| [agentic-qa-kit](https://github.com/aegolius-labs/agentic-qa-kit) | The loop closer: an evidence ledger and skills for agent-assisted QA |
+| agentic-product-playbook (private, experimental) | Stage and decision guidance for the framework's Intake side. It may become part of the framework instead of a separate product |
+
+A UI layer over the suite is wanted and its form is not chosen yet; see the
+vision.
 
 Which repository owns which kind of truth is defined in
 [`doc/authority-model.md`](https://github.com/aegolius-labs/aio-agentic-sdlc/blob/main/doc/authority-model.md).
@@ -28,7 +39,8 @@ published, outside code pull requests cannot be merged. Issues, design
 discussion and documentation feedback are welcome.
 
 Never commit secrets, credentials, production data or private backlog or QA
-evidence. All repositories are public.
+evidence. The product repositories are public, except agentic-product-playbook
+while it is an experiment. Treat anything committed to any of them as public.
 
 ## Before you start
 

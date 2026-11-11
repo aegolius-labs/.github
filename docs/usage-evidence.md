@@ -1,7 +1,8 @@
 # Usage evidence contract
 
-Status: proposed. Nothing implements it yet. Each kit adds it through its own
-ROADMAP item.
+Status: implemented in `agentic-backlog-kit` (R37, 2026-11-08). The other
+repositories have not implemented it; each adds it through its own ROADMAP
+item.
 
 This contract lets a project opt in to recording how the Aegolius Labs kits
 are used there, and lets the project's owner share that record on purpose.
